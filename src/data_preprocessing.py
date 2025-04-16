@@ -1,8 +1,10 @@
-from src.data_loader import load_data
+import os
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
+from src.data_loader import load_data
 
-def preprocess_data(data):
+
+def preprocess_data(data, results_dir):
     # Merge products with aisles and departments
     products = data['products'].merge(data['aisles'], on='aisle_id', how='left')
     products = products.merge(data['departments'], on='department_id', how='left')
@@ -22,12 +24,8 @@ def preprocess_data(data):
     prior['days_since_prior_order'] = prior['days_since_prior_order'].fillna(0)
 
     # --- Feature Engineering ---
-
-    # Total orders per user
     user_order_counts = data['orders'].groupby('user_id')['order_id'].count().reset_index()
     user_order_counts.columns = ['user_id', 'total_orders']
-
-    # Average days between orders per user
     avg_days = data['orders'].groupby('user_id')['days_since_prior_order'].mean().reset_index()
     avg_days.columns = ['user_id', 'avg_days_between_orders']
     avg_days['avg_days_between_orders'] = avg_days['avg_days_between_orders'].fillna(0)
@@ -46,12 +44,19 @@ def preprocess_data(data):
     basket_size.columns = ['user_id', 'avg_basket_size']
     prior = prior.merge(basket_size, on='user_id', how='left')
 
+    # Save preprocessed data to CSV
+    prior_data_path = os.path.join(results_dir, 'preprocessed_data.csv')
+    prior.to_csv(prior_data_path, index=False)
+    print(f"Preprocessed data saved to {prior_data_path}")
+
     return prior
 
+# Load data and preprocess
+data = load_data("E:\\web-data-mining\\data")
+results_dir = "E:\\web-data-mining\\results"
+os.makedirs(results_dir, exist_ok=True)  # Ensure the 'results' directory exists
 
-data = load_data("../data")
-prior_data = preprocess_data(data)
+prior_data = preprocess_data(data, results_dir)
 
-
+# Preview the processed data
 print(prior_data[['user_id', 'order_id', 'reordered', 'total_orders', 'avg_days_between_orders', 'reorder_ratio', 'avg_basket_size']].head())
-
