@@ -15,7 +15,6 @@ The dataset used in this project contains anonymized data about users, products,
   - [Analysis and Visualization](#analysis-and-visualization)
 - [GUI (Streamlit)](#gui-streamlit)
 - [Installation](#installation)
-- [Usage](#usage)
 - [License](#license)
 
 ---
@@ -89,8 +88,9 @@ To run this project locally, follow these steps:
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/yourusername/customer-segmentation-web-usage.git
-   cd customer-segmentation-web-usage
+   git clone https://github.com/chaimaanairi/web-data-mining
+   cd web-data-mining
+   
    
 2. **Install required packages:**
    ```bash
@@ -104,23 +104,11 @@ To run this project locally, follow these steps:
 
 4. **Using the GUI:**
 - Open the application in your web browser.
+- Navigate to `http://localhost:8501` to access the Streamlit app.
 - Upload your dataset in CSV format.
 - Select the algorithm(s) you want to run.
 - Configure the parameters for each algorithm.
 - View the results in graphical or tabular form.
-- Compare algorithm performance metrics.
-
-## Usage
-
-1. **Running the Streamlit GUI:**
-- Open your web browser and navigate to `http://localhost:8501` to access the Streamlit app
-
-2. **Using the GUI:**
-- Open the application in your web browser.
-- Upload your dataset in CSV format.
-- Select the algorithm(s) you want to run.
-- Configure the parameters for each algorithm.
-- View the results in graphical or tabular form. 
 - Compare algorithm performance metrics.
 
 ## License
