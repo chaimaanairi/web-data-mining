@@ -115,16 +115,4 @@ To run this project locally, follow these steps:
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 
-## Note: 
-- Make sure you have a working Python environment and have installed all the necessary libraries.
-- If you face issues with missing data or need help with algorithm configuration, feel free to refer to the detailed documentation or contact the project maintainer.
-
-
-### Key Changes:
-- **Corrected formatting of the Installation section** by fixing the code block and ensuring it was consistent.
-- **Expanded Usage instructions** to clarify the steps for using the GUI.
-
-This README should now provide clear instructions for setting up the project, running it locally, and using the GUI. Feel free to modify any parts as needed!
-
-
 
