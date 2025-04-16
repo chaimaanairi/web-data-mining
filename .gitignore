@@ -1,2 +1,12 @@
-# To ignore unnecessary files/folders (e.g., venv, data)
+# IDE
+.idea/
+.vscode/
+
 # Python
+__pycache__/
+*.pyc
+venv/
+
+# Data
+data/
+results/*.csv
