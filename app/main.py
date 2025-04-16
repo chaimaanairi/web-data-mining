@@ -1,5 +1,4 @@
 import streamlit as st
-import pandas as pd
 import sys
 import os
 
@@ -73,29 +72,23 @@ if data_loaded:
         else:
             # KMeans Clustering
             if st.sidebar.button("🧠 Run KMeans Clustering"):
-                # Check if the number of samples is sufficient for KMeans clustering
-                if len(prior_data) < n_clusters:
-                    st.error(
-                        f"❌ Number of samples ({len(prior_data)}) is less than the number of clusters ({n_clusters}). Please reduce the number of clusters or increase the number of samples.")
+                with st.spinner("Clustering..."):
+                    try:
+                        clustered_data_kmeans, _ = kmeans_clustering(prior_data, n_clusters=n_clusters, results_dir=RESULTS_DIR)
+                        st.success("✅ KMeans Clustering complete!")
+                    except Exception as e:
+                        st.error(f"Error during KMeans clustering: {e}")
+
+                st.subheader("📊 KMeans Clustered Data")
+                if clustered_data_kmeans is not None:
+                    st.dataframe(clustered_data_kmeans[['user_id', 'kmeans_cluster']].drop_duplicates().head(20))
+
+                st.subheader("📈 KMeans Elbow Method Plot")
+                elbow_plot_path = os.path.join(RESULTS_DIR, 'elbow_method_plot.png')
+                if os.path.exists(elbow_plot_path):
+                    st.image(elbow_plot_path)
                 else:
-                    with st.spinner("Clustering..."):
-                        try:
-                            clustered_data_kmeans, kmeans_model = kmeans_clustering(prior_data, n_clusters=n_clusters,
-                                                                                    results_dir=RESULTS_DIR)
-                            st.success("✅ KMeans Clustering complete!")
-                        except Exception as e:
-                            st.error(f"Error during KMeans clustering: {e}")
-
-                    st.subheader("📊 KMeans Clustered Data")
-                    if clustered_data_kmeans is not None:
-                        st.dataframe(clustered_data_kmeans[['user_id', 'kmeans_cluster']].drop_duplicates().head(20))
-
-                    st.subheader("📈 KMeans Elbow Method Plot")
-                    elbow_plot_path = os.path.join(RESULTS_DIR, 'elbow_method_plot.png')
-                    if os.path.exists(elbow_plot_path):
-                        st.image(elbow_plot_path)
-                    else:
-                        st.warning("Elbow plot not found in results directory.")
+                    st.warning("Elbow plot not found in results directory.")
 
             # DBSCAN Clustering
             if st.sidebar.button("🧠 Run DBSCAN Clustering"):
