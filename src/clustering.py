@@ -4,14 +4,15 @@ import pandas as pd
 from sklearn.cluster import KMeans, DBSCAN
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
-from src.data_loader import load_data
-from src.data_preprocessing import preprocess_data
 from sklearn.decomposition import PCA
 
-
+# Clustering functions
 def kmeans_clustering(prior_data, n_clusters=5, results_dir=None):
     features = ['total_orders', 'avg_days_between_orders', 'reorder_ratio', 'avg_basket_size']
     X = prior_data[features]
+
+    if len(X) < n_clusters:
+        raise ValueError(f"Number of samples ({len(X)}) is less than the number of clusters ({n_clusters}).")
 
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
@@ -20,6 +21,7 @@ def kmeans_clustering(prior_data, n_clusters=5, results_dir=None):
     kmeans.fit(X_scaled)
     prior_data['kmeans_cluster'] = kmeans.labels_
 
+    # Elbow method
     distortions = []
     for i in range(1, 11):
         kmeans_temp = KMeans(n_clusters=i, random_state=42)
@@ -38,11 +40,8 @@ def kmeans_clustering(prior_data, n_clusters=5, results_dir=None):
 
     return prior_data, kmeans
 
-
 def dbscan_clustering(prior_data, eps=0.5, min_samples=5, results_dir=None):
     features = ['total_orders', 'avg_days_between_orders', 'reorder_ratio', 'avg_basket_size']
-
-    # ⚠️ Sample to avoid MemoryError
     sample_size = min(10000, len(prior_data))
     sampled_data = prior_data.sample(n=sample_size, random_state=42)
     X = sampled_data[features]
@@ -69,7 +68,6 @@ def dbscan_clustering(prior_data, eps=0.5, min_samples=5, results_dir=None):
 
     return sampled_data, dbscan
 
-
 def plot_clusters(prior_data, kmeans_model=None, dbscan_model=None, results_dir=None):
     pca = PCA(n_components=2)
     X_scaled = StandardScaler().fit_transform(
@@ -90,29 +88,33 @@ def plot_clusters(prior_data, kmeans_model=None, dbscan_model=None, results_dir=
         plt.close()
         print(f"KMeans PCA plot saved to {kmeans_pca_plot_path}")
 
+# Only run this if the script is executed directly (not imported)
+if __name__ == "__main__":
+    from src.data_loader import load_data
+    from src.data_preprocessing import preprocess_data
 
-# Load and preprocess data
-data = load_data("E:\\web-data-mining\\data")
-results_dir = "E:\\web-data-mining\\results"
-os.makedirs(results_dir, exist_ok=True)
+    data = load_data("E:\\web-data-mining\\data")
+    results_dir = "E:\\web-data-mining\\results"
+    os.makedirs(results_dir, exist_ok=True)
 
-prior_data = preprocess_data(data, results_dir)
+    prior_data = preprocess_data(data, results_dir)
 
-# Run KMeans clustering
-clustered_data_kmeans, kmeans_model = kmeans_clustering(prior_data.copy(), n_clusters=5, results_dir=results_dir)
+    if len(prior_data) >= 5:
+        clustered_data_kmeans, kmeans_model = kmeans_clustering(prior_data.copy(), n_clusters=5, results_dir=results_dir)
 
-# Run DBSCAN clustering on sampled data to avoid MemoryError
-clustered_data_dbscan, dbscan_model = dbscan_clustering(prior_data.copy(), eps=0.5, min_samples=5, results_dir=results_dir)
+        clustered_data_dbscan, dbscan_model = dbscan_clustering(prior_data.copy(), eps=0.5, min_samples=5, results_dir=results_dir)
 
-# Save KMeans clustered data
-kmeans_csv_path = os.path.join(results_dir, 'clustered_data_kmeans.csv')
-clustered_data_kmeans[['user_id', 'kmeans_cluster']].to_csv(kmeans_csv_path, index=False)
-print(f"KMeans clustered data saved to {kmeans_csv_path}")
+        # Save KMeans clustered data
+        kmeans_csv_path = os.path.join(results_dir, 'clustered_data_kmeans.csv')
+        clustered_data_kmeans[['user_id', 'kmeans_cluster']].to_csv(kmeans_csv_path, index=False)
+        print(f"KMeans clustered data saved to {kmeans_csv_path}")
 
-# Save DBSCAN clustered sampled data
-dbscan_csv_path = os.path.join(results_dir, 'clustered_data_dbscan_sample.csv')
-clustered_data_dbscan[['user_id', 'dbscan_cluster']].to_csv(dbscan_csv_path, index=False)
-print(f"DBSCAN clustered sampled data saved to {dbscan_csv_path}")
+        # Save DBSCAN clustered sampled data
+        dbscan_csv_path = os.path.join(results_dir, 'clustered_data_dbscan_sample.csv')
+        clustered_data_dbscan[['user_id', 'dbscan_cluster']].to_csv(dbscan_csv_path, index=False)
+        print(f"DBSCAN clustered sampled data saved to {dbscan_csv_path}")
 
-# Visualize clusters (PCA-based KMeans only for now due to sampling)
-plot_clusters(clustered_data_kmeans, kmeans_model=kmeans_model, results_dir=results_dir)
+        # Visualize clusters
+        plot_clusters(clustered_data_kmeans, kmeans_model=kmeans_model, results_dir=results_dir)
+    else:
+        print(f"Not enough samples to run clustering. Only {len(prior_data)} rows available.")
