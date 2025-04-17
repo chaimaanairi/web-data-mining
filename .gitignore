@@ -10,3 +10,6 @@ venv/
 # Data
 data/
 results/*.csv
+results/preprocessed_data.csv
+results/preprocessed_data_concise.csv
+

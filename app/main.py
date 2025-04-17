@@ -126,27 +126,32 @@ elif step == "Visualize Raw Data":
     else:
         st.warning("Please upload data first.")
 
-# Step: Preprocess
+# Step: Preprocess Data
 elif step == "Preprocess Data":
-    if st.session_state.raw_data is not None:
-        st.subheader("🛠️ Data Preprocessing")
+    st.subheader("🛠️ Data Preprocessing")
 
-        if st.button("🔄 Preprocess Data"):
-            try:
-                results_dir = "E:\\web-data-mining\\results"
-                os.makedirs(results_dir, exist_ok=True)
-                st.session_state.processed_data = preprocess_data(st.session_state.raw_data, results_dir)
-                st.success("✅ Data preprocessed successfully!")
-                st.dataframe(st.session_state.processed_data.head())
-            except Exception as e:
-                st.error(f"Failed to preprocess data: {e}")
+    preprocessed_path = "E:\\web-data-mining\\results\\preprocessed_data_concise.csv"
+
+    if os.path.exists(preprocessed_path):
+        st.success("✅ Preprocessed data found. Loading from file...")
+        try:
+            # Load the preprocessed data from CSV
+            st.session_state.processed_data = pd.read_csv(preprocessed_path)
+            st.dataframe(st.session_state.processed_data.head())
+        except Exception as e:
+            st.error(f"❌ Failed to load preprocessed data: {e}")
     else:
-        st.warning("Please upload data first.")
+        st.warning("⚠️ Preprocessed data file not found.")
 
 # Step: Preprocessed Visualizations
 elif step == "Visualize Preprocessed Data":
     if st.session_state.processed_data is not None:
         st.subheader("📊 Preprocessed Data Visualizations")
+
+        # Check the shape and basic data overview for debugging
+        st.write("Data Overview:")
+        st.write(f"Data Shape: {st.session_state.processed_data.shape}")
+        st.write(st.session_state.processed_data.head())  # Display first few rows for confirmation
 
         # Call the functions to show preprocessed data visualizations
         st.write("### Total Orders per User")
@@ -168,7 +173,8 @@ elif step == "Visualize Preprocessed Data":
         plot_correlation_heatmap(st.session_state.processed_data)
 
     else:
-        st.warning("Please preprocess data first.")
+        st.warning("⚠️ Please preprocess data first.")
+
 
 # Step: Clustering
 elif step == "Run Clustering":
