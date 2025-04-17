@@ -1,129 +1,129 @@
+# main.py
 import streamlit as st
-import sys
 import os
+import sys
 
-# Add the root directory to sys.path
+# Add root to path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-# Import necessary functions from src
+# Import modules
 from src.data_loader import load_data
 from src.data_preprocessing import preprocess_data
 from src.clustering import kmeans_clustering, dbscan_clustering, plot_clusters
+from src.visualizations import show_raw_data_viz, show_preprocessed_data_viz
 
-# Set up paths
+# Set paths
 DATA_DIR = "E:\\web-data-mining\\data"
 RESULTS_DIR = "E:\\web-data-mining\\results"
 os.makedirs(RESULTS_DIR, exist_ok=True)
 
-# Page config
-st.set_page_config(page_title="Customer Segmentation App", layout="wide")
+# Streamlit config
+st.set_page_config(page_title="Customer Segmentation", layout="wide")
+st.title("🛍️ Customer Segmentation & Behavior Explorer")
 
-# Sidebar
-st.sidebar.title("🔧 Settings")
-st.sidebar.markdown("Upload your dataset and select clustering parameters.")
+# Sidebar section
+st.sidebar.title("Steps")
+step = st.sidebar.radio("Choose a step:", [
+    "Upload Data",
+    "Visualize Raw Data",
+    "Preprocess Data",
+    "Visualize Preprocessed Data",
+    "Run Clustering",
+    "Export Results"
+])
 
-# Main title
-st.title("🛒 Customer Segmentation & Behavior Analysis")
+# Session state for holding data
+if 'raw_data' not in st.session_state:
+    st.session_state.raw_data = None
+if 'processed_data' not in st.session_state:
+    st.session_state.processed_data = None
+if 'clustered_kmeans' not in st.session_state:
+    st.session_state.clustered_kmeans = None
+if 'clustered_dbscan' not in st.session_state:
+    st.session_state.clustered_dbscan = None
 
-# Upload dataset
-st.sidebar.subheader("1. Upload Dataset Folder")
-data_loaded = False
-data = None
-prior_data = None
+# Step: Upload
+if step == "Upload Data":
+    if st.button("📂 Load Sample Dataset"):
+        try:
+            st.session_state.raw_data = load_data(DATA_DIR)
+            st.success("✅ Dataset loaded successfully!")
+            st.dataframe(st.session_state.raw_data["orders"].head())
+        except Exception as e:
+            st.error(f"Failed to load data: {e}")
 
-# Simulate "loading" the dataset when the user clicks the button
-if st.sidebar.button("📂 Load Sample Dataset"):
-    try:
-        data = load_data(DATA_DIR)
-        data_loaded = True
-    except Exception as e:
-        st.error(f"Error loading data: {e}")
-        data_loaded = False
+# Step: Raw Visualizations
+elif step == "Visualize Raw Data":
+    if st.session_state.raw_data is not None:
+        st.subheader("📊 Raw Data Visualizations")
+        show_raw_data_viz(st.session_state.raw_data)
+    else:
+        st.warning("Please upload data first.")
 
-if data_loaded:
-    st.success("✅ Dataset loaded successfully!")
+# Step: Preprocess
+elif step == "Preprocess Data":
+    if st.session_state.raw_data is not None:
+        if st.button("⚙️ Run Preprocessing"):
+            with st.spinner("Processing..."):
+                try:
+                    processed = preprocess_data(st.session_state.raw_data, results_dir=RESULTS_DIR)
+                    st.session_state.processed_data = processed
+                    st.success("✅ Preprocessing complete!")
+                    st.dataframe(processed.head())
+                except Exception as e:
+                    st.error(f"Preprocessing error: {e}")
+    else:
+        st.warning("Please upload data first.")
 
-    if st.checkbox("Show raw `orders` data"):
-        st.dataframe(data["orders"].head(10))
+# Step: Preprocessed Visualizations
+elif step == "Visualize Preprocessed Data":
+    if st.session_state.processed_data is not None:
+        st.subheader("📊 Preprocessed Data Visualizations")
+        show_preprocessed_data_viz(st.session_state.processed_data)
+    else:
+        st.warning("Please preprocess data first.")
 
-    # Preprocess
-    st.sidebar.subheader("2. Preprocess and Analyze")
-    if st.sidebar.button("⚙️ Preprocess Data"):
-        with st.spinner("Preprocessing..."):
-            try:
-                prior_data = preprocess_data(data, results_dir=RESULTS_DIR)
-                st.success("✅ Preprocessing done!")
-            except Exception as e:
-                st.error(f"Error during preprocessing: {e}")
+# Step: Clustering
+elif step == "Run Clustering":
+    if st.session_state.processed_data is not None:
+        prior_data = st.session_state.processed_data
 
-        if st.checkbox("Show processed sample"):
-            if prior_data is not None:
-                st.dataframe(prior_data[['user_id', 'order_id', 'reorder_ratio', 'avg_basket_size']].head(10))
-
-        # Clustering
-        st.sidebar.subheader("3. Run Clustering")
-        n_clusters = st.sidebar.slider("Number of Clusters (KMeans)", 2, 10, 5)
-        eps = st.sidebar.slider("Epsilon (DBSCAN)", 0.1, 1.0, 0.5)
-        min_samples = st.sidebar.slider("Min Samples (DBSCAN)", 1, 10, 5)
-
-        # Check if the number of samples is sufficient for KMeans clustering
-        if len(prior_data) < n_clusters:
-            st.error(f"❌ Number of samples ({len(prior_data)}) is less than the number of clusters ({n_clusters}). Please reduce the number of clusters or increase the number of samples.")
+        if len(prior_data) < 5:
+            st.warning(f"⚠️ Not enough data to perform clustering (need ≥5 rows, got {len(prior_data)})")
         else:
-            # KMeans Clustering
-            if st.sidebar.button("🧠 Run KMeans Clustering"):
-                with st.spinner("Clustering..."):
-                    try:
-                        clustered_data_kmeans, _ = kmeans_clustering(prior_data, n_clusters=n_clusters, results_dir=RESULTS_DIR)
-                        st.success("✅ KMeans Clustering complete!")
-                    except Exception as e:
-                        st.error(f"Error during KMeans clustering: {e}")
+            st.sidebar.subheader("KMeans Parameters")
+            n_clusters = st.sidebar.slider("Number of Clusters", 2, 10, 5)
 
-                st.subheader("📊 KMeans Clustered Data")
-                if clustered_data_kmeans is not None:
-                    st.dataframe(clustered_data_kmeans[['user_id', 'kmeans_cluster']].drop_duplicates().head(20))
+            st.sidebar.subheader("DBSCAN Parameters")
+            eps = st.sidebar.slider("Epsilon", 0.1, 1.0, 0.5)
+            min_samples = st.sidebar.slider("Min Samples", 1, 10, 5)
 
-                st.subheader("📈 KMeans Elbow Method Plot")
-                elbow_plot_path = os.path.join(RESULTS_DIR, 'elbow_method_plot.png')
-                if os.path.exists(elbow_plot_path):
-                    st.image(elbow_plot_path)
-                else:
-                    st.warning("Elbow plot not found in results directory.")
+            if st.button("🧠 Run KMeans Clustering"):
+                clustered_kmeans, model_kmeans = kmeans_clustering(prior_data.copy(), n_clusters=n_clusters, results_dir=RESULTS_DIR)
+                st.session_state.clustered_kmeans = clustered_kmeans
+                st.dataframe(clustered_kmeans[['user_id', 'kmeans_cluster']].drop_duplicates().head())
 
-            # DBSCAN Clustering
-            if st.sidebar.button("🧠 Run DBSCAN Clustering"):
-                with st.spinner("Clustering..."):
-                    try:
-                        clustered_data_dbscan, _ = dbscan_clustering(prior_data, eps=eps, min_samples=min_samples, results_dir=RESULTS_DIR)
-                        st.success("✅ DBSCAN Clustering complete!")
-                    except Exception as e:
-                        st.error(f"Error during DBSCAN clustering: {e}")
+            if st.button("🧠 Run DBSCAN Clustering"):
+                clustered_dbscan, model_dbscan = dbscan_clustering(prior_data.copy(), eps=eps, min_samples=min_samples, results_dir=RESULTS_DIR)
+                st.session_state.clustered_dbscan = clustered_dbscan
+                st.dataframe(clustered_dbscan[['user_id', 'dbscan_cluster']].drop_duplicates().head())
 
-                st.subheader("📊 DBSCAN Clustered Data")
-                if clustered_data_dbscan is not None:
-                    st.dataframe(clustered_data_dbscan[['user_id', 'dbscan_cluster']].drop_duplicates().head(20))
+            # Optional PCA plot
+            if st.button("📉 Show PCA Cluster Plot"):
+                plot_clusters(prior_data, results_dir=RESULTS_DIR)
+                st.image(os.path.join(RESULTS_DIR, 'kmeans_pca_clustering_plot.png'))
 
-            # Visualizations for both KMeans and DBSCAN
-            if prior_data is not None:
-                st.subheader("📉 PCA Visualizations")
-                plot_clusters(prior_data, kmeans_model=None, dbscan_model=None, results_dir=RESULTS_DIR)
+    else:
+        st.warning("Please preprocess data first.")
 
-            # Export Clustered Data
-            st.sidebar.subheader("4. Export Data")
-            if st.sidebar.button("📤 Export KMeans Clustered Data"):
-                if clustered_data_kmeans is not None:
-                    export_kmeans_path = os.path.join(RESULTS_DIR, "clustered_data_kmeans.csv")
-                    clustered_data_kmeans[['user_id', 'kmeans_cluster']].to_csv(export_kmeans_path, index=False)
-                    st.success(f"KMeans clustered data exported to {export_kmeans_path}")
-                else:
-                    st.error("KMeans data not available.")
+# Step: Export
+elif step == "Export Results":
+    if st.session_state.clustered_kmeans is not None:
+        kmeans_export_path = os.path.join(RESULTS_DIR, "clustered_data_kmeans.csv")
+        st.session_state.clustered_kmeans[['user_id', 'kmeans_cluster']].to_csv(kmeans_export_path, index=False)
+        st.success(f"KMeans exported to: {kmeans_export_path}")
 
-            if st.sidebar.button("📤 Export DBSCAN Clustered Data"):
-                if clustered_data_dbscan is not None:
-                    export_dbscan_path = os.path.join(RESULTS_DIR, "clustered_data_dbscan.csv")
-                    clustered_data_dbscan[['user_id', 'dbscan_cluster']].to_csv(export_dbscan_path, index=False)
-                    st.success(f"DBSCAN clustered data exported to {export_dbscan_path}")
-                else:
-                    st.error("DBSCAN data not available.")
-else:
-    st.warning("👈 Use the sidebar to load the dataset.")
+    if st.session_state.clustered_dbscan is not None:
+        dbscan_export_path = os.path.join(RESULTS_DIR, "clustered_data_dbscan.csv")
+        st.session_state.clustered_dbscan[['user_id', 'dbscan_cluster']].to_csv(dbscan_export_path, index=False)
+        st.success(f"DBSCAN exported to: {dbscan_export_path}")
