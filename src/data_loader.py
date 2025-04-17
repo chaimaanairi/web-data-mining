@@ -58,3 +58,9 @@ try:
 
 except FileNotFoundError as e:
     print(f"❌ Error: {e}")
+
+
+
+orders = pd.read_csv("E:\\web-data-mining\\data\\orders.csv")
+print("\n🧾 Columns in orders.csv:")
+print(orders.columns.tolist())

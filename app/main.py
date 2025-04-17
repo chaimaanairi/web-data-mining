@@ -2,6 +2,7 @@
 import streamlit as st
 import os
 import sys
+import pandas as pd
 
 # Add root to path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -10,7 +11,26 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.data_loader import load_data
 from src.data_preprocessing import preprocess_data
 from src.clustering import kmeans_clustering, dbscan_clustering, plot_clusters
-from src.visualizations import show_raw_data_viz, show_preprocessed_data_viz
+from src.data_visualizations import (
+    orders_by_day,
+    orders_by_hour,
+    top_10_most_ordered,
+    avg_days_between_orders,
+    reorder_frequency,
+    most_reordered_products,
+    top_departments,
+    top_aisles
+)
+
+# Import Preprocessed Data Visualizations
+from src.preprocessed_data_visualization import (
+    plot_total_orders,
+    plot_avg_days_between_orders,
+    plot_reorder_ratio,
+    plot_avg_basket_size,
+    plot_basket_size_vs_reorder_ratio,
+    plot_correlation_heatmap
+)
 
 # Set paths
 DATA_DIR = "E:\\web-data-mining\\data"
@@ -46,9 +66,16 @@ if 'clustered_dbscan' not in st.session_state:
 if step == "Upload Data":
     if st.button("📂 Load Sample Dataset"):
         try:
+            # Load the data
             st.session_state.raw_data = load_data(DATA_DIR)
             st.success("✅ Dataset loaded successfully!")
-            st.dataframe(st.session_state.raw_data["orders"].head())
+
+            # Visualize each table
+            # Display available tables in raw_data
+            for table_name, table_data in st.session_state.raw_data.items():
+                st.write(f"### {table_name.capitalize()}")
+                st.dataframe(table_data.head())  # Show the first few rows of each table
+
         except Exception as e:
             st.error(f"Failed to load data: {e}")
 
@@ -56,22 +83,63 @@ if step == "Upload Data":
 elif step == "Visualize Raw Data":
     if st.session_state.raw_data is not None:
         st.subheader("📊 Raw Data Visualizations")
-        show_raw_data_viz(st.session_state.raw_data)
+
+        st.write("### Orders by Day")
+        orders_by_day(st.session_state.raw_data['orders'])
+
+        st.write("### Orders by Hour")
+        orders_by_hour(st.session_state.raw_data['orders'])
+
+        st.write("### Top 10 Most Ordered Products")
+        top_10_most_ordered(
+            st.session_state.raw_data['order_products_prior'],
+            st.session_state.raw_data['products']
+        )
+
+        st.write("### Average Days Between Orders")
+        avg_days_between_orders(st.session_state.raw_data['orders'])
+
+        st.write("### Reorder Frequency Distribution")
+        reorder_frequency(st.session_state.raw_data['order_products_prior'])
+
+        st.write("### Most Reordered Products")
+        most_reordered_products(
+            st.session_state.raw_data['order_products_prior'],
+            st.session_state.raw_data['products']
+        )
+
+        st.write("### Top Departments")
+        top_departments(
+            st.session_state.raw_data['order_products_prior'],
+            st.session_state.raw_data['products'],
+            st.session_state.raw_data['departments']
+        )
+
+        st.write("### Top Aisles")
+        top_aisles(
+            st.session_state.raw_data['order_products_prior'],
+            st.session_state.raw_data['products'],
+            st.session_state.raw_data['aisles'],
+            st.session_state.raw_data['departments']
+        )
+
     else:
         st.warning("Please upload data first.")
 
 # Step: Preprocess
 elif step == "Preprocess Data":
     if st.session_state.raw_data is not None:
-        if st.button("⚙️ Run Preprocessing"):
-            with st.spinner("Processing..."):
-                try:
-                    processed = preprocess_data(st.session_state.raw_data, results_dir=RESULTS_DIR)
-                    st.session_state.processed_data = processed
-                    st.success("✅ Preprocessing complete!")
-                    st.dataframe(processed.head())
-                except Exception as e:
-                    st.error(f"Preprocessing error: {e}")
+        st.subheader("🛠️ Data Preprocessing")
+
+        if st.button("🔄 Preprocess Data"):
+            try:
+                results_dir = "E:\\web-data-mining\\results"
+                os.makedirs(results_dir, exist_ok=True)
+                st.session_state.processed_data = preprocess_data(st.session_state.raw_data, results_dir)
+                st.success("✅ Data preprocessed successfully!")
+                st.dataframe(st.session_state.processed_data.head())
+            except Exception as e:
+                st.error(f"Failed to preprocess data: {e}")
     else:
         st.warning("Please upload data first.")
 
@@ -79,7 +147,26 @@ elif step == "Preprocess Data":
 elif step == "Visualize Preprocessed Data":
     if st.session_state.processed_data is not None:
         st.subheader("📊 Preprocessed Data Visualizations")
-        show_preprocessed_data_viz(st.session_state.processed_data)
+
+        # Call the functions to show preprocessed data visualizations
+        st.write("### Total Orders per User")
+        plot_total_orders(st.session_state.processed_data)
+
+        st.write("### Average Days Between Orders per User")
+        plot_avg_days_between_orders(st.session_state.processed_data)
+
+        st.write("### User Reorder Ratio Distribution")
+        plot_reorder_ratio(st.session_state.processed_data)
+
+        st.write("### Average Basket Size per User")
+        plot_avg_basket_size(st.session_state.processed_data)
+
+        st.write("### Relationship Between Basket Size and Reorder Ratio")
+        plot_basket_size_vs_reorder_ratio(st.session_state.processed_data)
+
+        st.write("### Correlation Heatmap of Engineered Features")
+        plot_correlation_heatmap(st.session_state.processed_data)
+
     else:
         st.warning("Please preprocess data first.")
 
