@@ -1,4 +1,3 @@
-#Random Forest Classification
 import os
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
@@ -67,6 +66,19 @@ def random_forest_classification(data, target_column, features=None, results_dir
     print(classification_report(y_test, y_pred))
 
     # Save classification report and confusion matrix
+    model_results = {
+        'model': rf_classifier,
+        'accuracy': accuracy,
+        'precision': precision,
+        'recall': recall,
+        'f1': f1,
+        'execution_time': execution_time,
+        'roc_auc': roc_auc,
+        'confusion_matrix': cm,
+        'y_test': y_test,
+        'y_pred': y_pred
+    }
+
     if results_dir:
         # Save classification report
         report_path = os.path.join(results_dir, 'classification_report.txt')
@@ -119,7 +131,12 @@ def random_forest_classification(data, target_column, features=None, results_dir
     memory_usage = memory_info.rss / (1024 ** 2)  # in MB
     print(f"Memory Usage: {memory_usage:.2f} MB")
 
-    return rf_classifier, accuracy, precision, recall, f1, execution_time, roc_auc, cm, y_test, y_pred
+    # Save model and results as a dictionary
+    model_path = os.path.join(results_dir, 'random_forest_model.pkl')
+    joblib.dump(model_results, model_path)
+    print(f"Random Forest model and results saved to {model_path}")
+
+    return model_results
 
 
 # Only run this if the script is executed directly (not imported)
@@ -134,13 +151,8 @@ if __name__ == "__main__":
     # Assuming you want to predict the 'target' column (replace 'target' with your actual target column name)
     if len(prior_data) >= 5:
         target_column = 'reordered'  # Updated to 'reordered' or the appropriate target column
-        rf_classifier, accuracy, precision, recall, f1, execution_time, roc_auc, cm = random_forest_classification(
+        model_results = random_forest_classification(
             prior_data, target_column, results_dir=results_dir)
-
-        # Save the trained model if needed
-        model_path = os.path.join(results_dir, 'random_forest_model.pkl')
-        joblib.dump(rf_classifier, model_path)
-        print(f"Random Forest model saved to {model_path}")
 
     else:
         print(f"Not enough samples to run classification. Only {len(prior_data)} rows available.")
