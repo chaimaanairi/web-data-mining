@@ -6,6 +6,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
+import joblib
 
 # Add root to path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -61,6 +62,8 @@ step = st.sidebar.radio("Choose a step:", [
     "Visualize Preprocessed Data",
     "Run Clustering",
     "Run Classification",
+    "Run Learning",
+    "Run Mining",
 ])
 
 # Session state for holding data
@@ -253,41 +256,120 @@ elif step == "Run Clustering":
 # Step: Classification
 elif step == "Run Classification":
     if st.session_state.processed_data is not None:
+        st.subheader("🔍 Classification Analysis")
         prior_data = st.session_state.processed_data
 
         if len(prior_data) < 5:
             st.warning(f"⚠️ Not enough data to perform classification (need ≥5 rows, got {len(prior_data)})")
         else:
+            # Sidebar controls for features and target column
             target_column = st.sidebar.text_input("Target Column", "reordered")
             features = st.sidebar.text_area("Features (comma-separated)", "total_orders, avg_days_between_orders, reorder_ratio, avg_basket_size")
 
-            if st.button("🧠 Run Random Forest Classification"):
-                features = [feature.strip() for feature in features.split(",")]
+            # Button to load existing classification results
+            if st.button("📂 Load Classification Results"):
+                model_path = os.path.join(RESULTS_DIR, "random_forest_model.pkl")
+                cm_plot_path = os.path.join(RESULTS_DIR, "confusion_matrix.png")
+                roc_auc_plot_path = os.path.join(RESULTS_DIR, "roc_auc_curve.png")
 
-                rf_classifier, accuracy, precision, recall, f1, execution_time, roc_auc, cm, y_test, y_pred = random_forest_classification(
-                    prior_data,
-                    target_column=target_column,
-                    features=features,
-                    results_dir=RESULTS_DIR
-                )
+                try:
+                    # Load the entire model and results (assumes it was saved as a dictionary)
+                    loaded_model_data = joblib.load(model_path)
 
-                st.subheader("📊 Classification Report")
-                st.text(classification_report(y_test, y_pred))
+                    # Check that model and predictions are loaded correctly
+                    rf_classifier = loaded_model_data['model']
+                    y_test = loaded_model_data['y_test']
+                    y_pred = loaded_model_data['y_pred']
+                    accuracy = loaded_model_data['accuracy']
+                    precision = loaded_model_data['precision']
+                    recall = loaded_model_data['recall']
+                    f1 = loaded_model_data['f1']
+                    execution_time = loaded_model_data['execution_time']
+                    roc_auc = loaded_model_data['roc_auc'] if 'roc_auc' in loaded_model_data else None
 
-                st.subheader(f"🔍 Accuracy: {accuracy:.4f}")
-                st.subheader(f"⚖️ Precision: {precision:.4f}")
-                st.subheader(f"📊 Recall: {recall:.4f}")
-                st.subheader(f"⚡ F1-Score: {f1:.4f}")
-                st.subheader(f"⏱️ Execution Time: {execution_time:.4f} seconds")
+                    # Display the classification report and results
+                    st.subheader("📊 Classification Report (Table Format)")
 
-                cm_plot_path = os.path.join(RESULTS_DIR, 'confusion_matrix.png')
-                st.image(cm_plot_path)
+                    # Convert classification report to a dict, then to a DataFrame
+                    report_dict = classification_report(y_test, y_pred, output_dict=True)
+                    report_df = pd.DataFrame(report_dict).transpose()
 
-                if roc_auc is not None:
-                    roc_auc_plot_path = os.path.join(RESULTS_DIR, 'roc_auc_curve.png')
-                    st.image(roc_auc_plot_path)
+                    # Display as a Streamlit table
+                    st.dataframe(report_df.style.format("{:.4f}"))
+
+                    # Display summary metrics in another table
+                    summary_df = pd.DataFrame({
+                        "Metric": ["Accuracy", "Precision", "Recall", "F1-Score", "Execution Time (s)"],
+                        "Value": [accuracy, precision, recall, f1, execution_time]
+                    })
+                    st.subheader("📌 Summary Metrics")
+                    st.table(summary_df.style.format({"Value": "{:.4f}"}))
+
+                    if os.path.exists(cm_plot_path):
+                        st.subheader("📉 Confusion Matrix")
+                        st.image(cm_plot_path)
+
+                    if roc_auc is not None and os.path.exists(roc_auc_plot_path):
+                        st.subheader("📈 ROC AUC Curve")
+                        st.image(roc_auc_plot_path)
+
+                except Exception as e:
+                    st.error(f"❌ Failed to load classification results: {e}")
+
     else:
         st.warning("⚠️ Please preprocess data first.")
 
-#
+
+# Step: Learning
+elif step == "Run Learning":
+    if st.session_state.processed_data is not None:
+        st.subheader("📘 Learning Models (KNN & XGBoost)")
+        prior_data = st.session_state.processed_data
+
+        # Define results directory if not already done
+        results_dir = st.session_state.get("results_dir", "E:\\web-data-mining\\results")
+
+        if st.button("📂 Load Learning Results"):
+            models = ["KNN", "XGBoost"]
+            for model_name in models:
+                st.subheader(f"🔹 {model_name} Results")
+
+                # Load model and metrics
+                model_path = os.path.join(results_dir, f"{model_name}_model.pkl")
+                if os.path.exists(model_path):
+                    data = joblib.load(model_path)
+
+                    # Summary metrics
+                    summary_df = pd.DataFrame({
+                        "Metric": ["Accuracy", "Precision", "Recall", "F1-Score", "Execution Time (s)", "ROC-AUC"],
+                        "Value": [
+                            data['accuracy'],
+                            data['precision'],
+                            data['recall'],
+                            data['f1'],
+                            data['execution_time'],
+                            data['roc_auc'] if data['roc_auc'] is not None else "N/A"
+                        ]
+                    })
+                    st.table(summary_df)
+
+                    # Confusion Matrix
+                    cm_img = os.path.join(results_dir, f"{model_name}_confusion_matrix.png")
+                    if os.path.exists(cm_img):
+                        st.image(cm_img, caption=f"{model_name} Confusion Matrix")
+
+                    # ROC Curve
+                    roc_img = os.path.join(results_dir, f"{model_name}_roc_auc_curve.png")
+                    if os.path.exists(roc_img):
+                        st.image(roc_img, caption=f"{model_name} ROC-AUC Curve")
+
+                    # Feature Importance (XGBoost only)
+                    if model_name == "XGBoost":
+                        feat_img = os.path.join(results_dir, f"{model_name}_feature_importance.png")
+                        if os.path.exists(feat_img):
+                            st.image(feat_img, caption="XGBoost Feature Importance")
+                else:
+                    st.warning(f"No results found for {model_name}")
+    else:
+        st.warning("⚠️ Please run preprocessing/classification first to generate data.")
 
