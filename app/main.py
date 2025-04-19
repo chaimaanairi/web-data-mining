@@ -3,6 +3,9 @@ import streamlit as st
 import os
 import sys
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
 
 # Add root to path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -32,6 +35,12 @@ from src.preprocessed_data_visualization import (
     plot_correlation_heatmap
 )
 
+# Import Classification
+from src.classification import random_forest_classification
+from sklearn.metrics import classification_report
+from sklearn.model_selection import train_test_split
+
+
 # Set paths
 DATA_DIR = "E:\\web-data-mining\\data"
 RESULTS_DIR = "E:\\web-data-mining\\results"
@@ -51,7 +60,7 @@ step = st.sidebar.radio("Choose a step:", [
     "Preprocess Data",
     "Visualize Preprocessed Data",
     "Run Clustering",
-    "Export Results"
+    "Run Classification",
 ])
 
 # Session state for holding data
@@ -241,14 +250,44 @@ elif step == "Run Clustering":
         st.warning("⚠️ Please preprocess data first.")
 
 
-# Step: Export
-elif step == "Export Results":
-    if st.session_state.clustered_kmeans is not None:
-        kmeans_export_path = os.path.join(RESULTS_DIR, "clustered_data_kmeans.csv")
-        st.session_state.clustered_kmeans[['user_id', 'kmeans_cluster']].to_csv(kmeans_export_path, index=False)
-        st.success(f"KMeans exported to: {kmeans_export_path}")
+# Step: Classification
+elif step == "Run Classification":
+    if st.session_state.processed_data is not None:
+        prior_data = st.session_state.processed_data
 
-    if st.session_state.clustered_dbscan is not None:
-        dbscan_export_path = os.path.join(RESULTS_DIR, "clustered_data_dbscan.csv")
-        st.session_state.clustered_dbscan[['user_id', 'dbscan_cluster']].to_csv(dbscan_export_path, index=False)
-        st.success(f"DBSCAN exported to: {dbscan_export_path}")
+        if len(prior_data) < 5:
+            st.warning(f"⚠️ Not enough data to perform classification (need ≥5 rows, got {len(prior_data)})")
+        else:
+            target_column = st.sidebar.text_input("Target Column", "reordered")
+            features = st.sidebar.text_area("Features (comma-separated)", "total_orders, avg_days_between_orders, reorder_ratio, avg_basket_size")
+
+            if st.button("🧠 Run Random Forest Classification"):
+                features = [feature.strip() for feature in features.split(",")]
+
+                rf_classifier, accuracy, precision, recall, f1, execution_time, roc_auc, cm, y_test, y_pred = random_forest_classification(
+                    prior_data,
+                    target_column=target_column,
+                    features=features,
+                    results_dir=RESULTS_DIR
+                )
+
+                st.subheader("📊 Classification Report")
+                st.text(classification_report(y_test, y_pred))
+
+                st.subheader(f"🔍 Accuracy: {accuracy:.4f}")
+                st.subheader(f"⚖️ Precision: {precision:.4f}")
+                st.subheader(f"📊 Recall: {recall:.4f}")
+                st.subheader(f"⚡ F1-Score: {f1:.4f}")
+                st.subheader(f"⏱️ Execution Time: {execution_time:.4f} seconds")
+
+                cm_plot_path = os.path.join(RESULTS_DIR, 'confusion_matrix.png')
+                st.image(cm_plot_path)
+
+                if roc_auc is not None:
+                    roc_auc_plot_path = os.path.join(RESULTS_DIR, 'roc_auc_curve.png')
+                    st.image(roc_auc_plot_path)
+    else:
+        st.warning("⚠️ Please preprocess data first.")
+
+#
+
