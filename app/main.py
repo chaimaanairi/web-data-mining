@@ -60,10 +60,11 @@ step = st.sidebar.radio("Choose a step:", [
     "Visualize Raw Data",
     "Preprocess Data",
     "Visualize Preprocessed Data",
-    "Run Clustering",
-    "Run Classification",
-    "Run Learning",
-    "Run Mining",
+    "Run Clustering Models",
+    "Run Classification Model",
+    "Run Learning Models",
+    "Run Apriori Mining",
+    "Evaluation Models Performance"
 ])
 
 # Session state for holding data
@@ -184,8 +185,9 @@ elif step == "Visualize Preprocessed Data":
 
 
 # Step: Clustering
-elif step == "Run Clustering":
+elif step == "Run Clustering Models":
     if st.session_state.processed_data is not None:
+        st.subheader("Clustering Models: KMeans & DBSCAN")
         prior_data = st.session_state.processed_data
 
         if len(prior_data) < 5:
@@ -254,9 +256,9 @@ elif step == "Run Clustering":
 
 
 # Step: Classification
-elif step == "Run Classification":
+elif step == "Run Classification Model":
     if st.session_state.processed_data is not None:
-        st.subheader("🔍 Classification Analysis")
+        st.subheader("Classification Model: Random Forest")
         prior_data = st.session_state.processed_data
 
         if len(prior_data) < 5:
@@ -321,9 +323,9 @@ elif step == "Run Classification":
 
 
 # Step: Learning
-elif step == "Run Learning":
+elif step == "Run Learning Models":
     if st.session_state.processed_data is not None:
-        st.subheader("📘 Learning Models (KNN & XGBoost)")
+        st.subheader("Learning Models (KNN & XGBoost)")
         prior_data = st.session_state.processed_data
 
         # Define results directory if not already done
@@ -372,4 +374,30 @@ elif step == "Run Learning":
                     st.warning(f"No results found for {model_name}")
     else:
         st.warning("⚠️ Please run preprocessing/classification first to generate data.")
+
+# Step: Apriori Mining
+elif step == "Run Apriori Mining":
+    if st.session_state.processed_data is not None:
+        st.subheader("Apriori Mining")
+        prior_data = st.session_state.processed_data
+
+        rules_path = os.path.join(RESULTS_DIR, "apriori_rules.csv")
+
+        if os.path.exists(rules_path):
+            rules = pd.read_csv(rules_path)
+
+            st.write(f"📄 Total Rules: {len(rules)}")
+            st.dataframe(rules[['antecedents', 'consequents', 'support', 'confidence', 'lift']].head(20))
+        else:
+            st.warning("No Apriori rules found. Please run `apriori_mining.py` first.")
+    else:
+        st.warning("⚠️ Please preprocess data first.")
+
+
+# Step: Evaluation Models Performance
+elif step == "Evaluation Models Performance":
+    st.subheader("📊 Evaluation of Models Performance")
+    st.write("This section will provide an overview of the performance of the various models used in this project.")
+    st.write("You can check the results of the classification and learning models in their respective sections.")
+
 
