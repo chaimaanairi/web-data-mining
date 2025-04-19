@@ -88,6 +88,19 @@ def plot_clusters(prior_data, kmeans_model=None, dbscan_model=None, results_dir=
         plt.close()
         print(f"KMeans PCA plot saved to {kmeans_pca_plot_path}")
 
+    if dbscan_model:
+        plt.figure(figsize=(8, 6))
+        plt.scatter(prior_data['PCA1'], prior_data['PCA2'], c=prior_data['dbscan_cluster'], cmap='viridis', alpha=0.6)
+        plt.title('DBSCAN Clustering - PCA Reduction (2D)')
+        plt.xlabel('PCA 1')
+        plt.ylabel('PCA 2')
+        plt.colorbar(label='Cluster')
+        dbscan_pca_plot_path = os.path.join(results_dir, 'dbscan_pca_clustering_plot.png')
+        plt.savefig(dbscan_pca_plot_path)
+        plt.close()
+        print(f"DBSCAN PCA plot saved to {dbscan_pca_plot_path}")
+
+
 # Only run this if the script is executed directly (not imported)
 if __name__ == "__main__":
     from src.data_loader import load_data
@@ -116,5 +129,6 @@ if __name__ == "__main__":
 
         # Visualize clusters
         plot_clusters(clustered_data_kmeans, kmeans_model=kmeans_model, results_dir=results_dir)
+        plot_clusters(clustered_data_dbscan, dbscan_model=dbscan_model, results_dir=results_dir)
     else:
         print(f"Not enough samples to run clustering. Only {len(prior_data)} rows available.")

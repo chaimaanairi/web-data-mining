@@ -35,6 +35,8 @@ from src.preprocessed_data_visualization import (
 # Set paths
 DATA_DIR = "E:\\web-data-mining\\data"
 RESULTS_DIR = "E:\\web-data-mining\\results"
+preprocessed_path = "E:\\web-data-mining\\results\\preprocessed_data_concise.csv"
+
 os.makedirs(RESULTS_DIR, exist_ok=True)
 
 # Streamlit config
@@ -130,8 +132,6 @@ elif step == "Visualize Raw Data":
 elif step == "Preprocess Data":
     st.subheader("🛠️ Data Preprocessing")
 
-    preprocessed_path = "E:\\web-data-mining\\results\\preprocessed_data_concise.csv"
-
     if os.path.exists(preprocessed_path):
         st.success("✅ Preprocessed data found. Loading from file...")
         try:
@@ -147,11 +147,6 @@ elif step == "Preprocess Data":
 elif step == "Visualize Preprocessed Data":
     if st.session_state.processed_data is not None:
         st.subheader("📊 Preprocessed Data Visualizations")
-
-        # Check the shape and basic data overview for debugging
-        st.write("Data Overview:")
-        st.write(f"Data Shape: {st.session_state.processed_data.shape}")
-        st.write(st.session_state.processed_data.head())  # Display first few rows for confirmation
 
         # Call the functions to show preprocessed data visualizations
         st.write("### Total Orders per User")
@@ -184,6 +179,7 @@ elif step == "Run Clustering":
         if len(prior_data) < 5:
             st.warning(f"⚠️ Not enough data to perform clustering (need ≥5 rows, got {len(prior_data)})")
         else:
+            # Sidebar controls
             st.sidebar.subheader("KMeans Parameters")
             n_clusters = st.sidebar.slider("Number of Clusters", 2, 10, 5)
 
@@ -191,23 +187,59 @@ elif step == "Run Clustering":
             eps = st.sidebar.slider("Epsilon", 0.1, 1.0, 0.5)
             min_samples = st.sidebar.slider("Min Samples", 1, 10, 5)
 
+            # Session state init
+            for key in ['show_kmeans_result', 'show_kmeans_pca', 'show_dbscan_result', 'show_dbscan_pca']:
+                if key not in st.session_state:
+                    st.session_state[key] = False
+
+            # KMeans Clustering Button
             if st.button("🧠 Run KMeans Clustering"):
                 clustered_kmeans, model_kmeans = kmeans_clustering(prior_data.copy(), n_clusters=n_clusters, results_dir=RESULTS_DIR)
                 st.session_state.clustered_kmeans = clustered_kmeans
-                st.dataframe(clustered_kmeans[['user_id', 'kmeans_cluster']].drop_duplicates().head())
+                st.session_state.model_kmeans = model_kmeans
+                st.session_state.show_kmeans_result = True
 
+            # Show KMeans PCA Plot
+            if st.button("📉 Show KMeans PCA Cluster Plot"):
+                if 'clustered_kmeans' in st.session_state:
+                    plot_clusters(st.session_state.clustered_kmeans, kmeans_model=st.session_state.model_kmeans, results_dir=RESULTS_DIR)
+                    st.session_state.show_kmeans_pca = True
+
+            # DBSCAN Clustering Button
             if st.button("🧠 Run DBSCAN Clustering"):
                 clustered_dbscan, model_dbscan = dbscan_clustering(prior_data.copy(), eps=eps, min_samples=min_samples, results_dir=RESULTS_DIR)
                 st.session_state.clustered_dbscan = clustered_dbscan
-                st.dataframe(clustered_dbscan[['user_id', 'dbscan_cluster']].drop_duplicates().head())
+                st.session_state.model_dbscan = model_dbscan
+                st.session_state.show_dbscan_result = True
 
-            # Optional PCA plot
-            if st.button("📉 Show PCA Cluster Plot"):
-                plot_clusters(prior_data, results_dir=RESULTS_DIR)
+            # Show DBSCAN PCA Plot
+            if st.button("📉 Show DBSCAN PCA Cluster Plot"):
+                if 'clustered_dbscan' in st.session_state:
+                    plot_clusters(st.session_state.clustered_dbscan, dbscan_model=st.session_state.model_dbscan, results_dir=RESULTS_DIR)
+                    st.session_state.show_dbscan_pca = True
+
+            # ======================
+            # Show Results on Page
+            # ======================
+            if st.session_state.show_kmeans_result:
+                st.subheader("🔍 KMeans Clustering Result")
+                st.dataframe(st.session_state.clustered_kmeans[['user_id', 'kmeans_cluster']].drop_duplicates().head())
+
+            if st.session_state.show_kmeans_pca:
+                st.subheader("📊 KMeans PCA Cluster Plot")
                 st.image(os.path.join(RESULTS_DIR, 'kmeans_pca_clustering_plot.png'))
 
+            if st.session_state.show_dbscan_result:
+                st.subheader("🔍 DBSCAN Clustering Result")
+                st.dataframe(st.session_state.clustered_dbscan[['user_id', 'dbscan_cluster']].drop_duplicates().head())
+
+            if st.session_state.show_dbscan_pca:
+                st.subheader("📊 DBSCAN PCA Cluster Plot")
+                st.image(os.path.join(RESULTS_DIR, 'dbscan_pca_clustering_plot.png'))
+
     else:
-        st.warning("Please preprocess data first.")
+        st.warning("⚠️ Please preprocess data first.")
+
 
 # Step: Export
 elif step == "Export Results":
