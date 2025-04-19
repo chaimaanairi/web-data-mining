@@ -1,3 +1,0 @@
-order_id,product_id,reordered,product_name,aisle_id,department_id,aisle,department,user_id,order_hour_of_day,days_since_prior_order,total_orders,avg_days_between_orders,reorder_ratio,avg_basket_size
-1,1,1,0,1,1,1,0,1,8,10,1,10.0,1.0,1.0
-2,2,0,1,2,2,0,1,2,9,5,1,5.0,0.0,1.0
