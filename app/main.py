@@ -241,9 +241,7 @@ elif step == "Run Clustering Models":
                                   results_dir=RESULTS_DIR)
                     st.session_state.show_dbscan_pca = True
 
-            # ======================
             # Show Results on Page
-            # ======================
             if st.session_state.show_kmeans_result:
                 st.subheader("🔍 KMeans Clustering Result")
                 st.dataframe(st.session_state.clustered_kmeans[['user_id', 'kmeans_cluster']].drop_duplicates().head())
