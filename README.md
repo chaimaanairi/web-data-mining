@@ -114,8 +114,3 @@ To run this project locally, follow these steps:
 - View the results in graphical or tabular form.
 - Compare algorithm performance metrics.
 
-## License
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
-
-
