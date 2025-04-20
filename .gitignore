@@ -9,6 +9,8 @@ venv/
 
 # Data
 data/
+
+#results big files
 results/*.csv
 results/preprocessed_data.csv
 results/preprocessed_data_concise.csv
