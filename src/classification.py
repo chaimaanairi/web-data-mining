@@ -81,7 +81,7 @@ def random_forest_classification(data, target_column, features=None, results_dir
 
     if results_dir:
         # Save classification report
-        report_path = os.path.join(results_dir, 'classification_report.txt')
+        report_path = os.path.join(results_dir, 'random_forest_report.txt')
         with open(report_path, 'w') as f:
             f.write(classification_report(y_test, y_pred))
         print(f"Classification report saved to {report_path}")
