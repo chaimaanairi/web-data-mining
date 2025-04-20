@@ -1,0 +1,8 @@
+DBSCAN Clustering Report
+========================
+EPS: 0.5
+Min Samples: 5
+Number of clusters (excluding noise): 7
+Number of noise points: 123
+Silhouette Score: Not applicable
+Davies-Bouldin Index: Not applicable

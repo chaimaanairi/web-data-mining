@@ -1,0 +1,9 @@
+Apriori Algorithm Report
+=========================
+Number of Rules: 1
+Average Support: 0.0011
+Average Confidence: 0.0589
+Average Lift: 1.8612
+Lift Coverage (Lift >= 1.5): 100.00%
+
+Metrics and results have been saved successfully.

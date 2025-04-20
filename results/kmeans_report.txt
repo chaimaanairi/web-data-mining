@@ -1,0 +1,5 @@
+KMeans Clustering Report
+=========================
+Number of clusters: 5
+Silhouette Score (sampled): 0.2718
+Davies-Bouldin Index (sampled): 1.1164
