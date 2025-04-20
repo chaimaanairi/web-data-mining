@@ -114,7 +114,8 @@ def dbscan_clustering(prior_data, eps=0.5, min_samples=5, results_dir=None):
     plt.close()
     print(f"DBSCAN plot saved to {dbscan_plot_path}")
 
-    return sampled_data, dbscan
+    return sampled_data, dbscan, silhouette, davies  # Return 4 values
+
 
 
 def plot_clusters(prior_data, kmeans_model=None, dbscan_model=None, results_dir=None):
@@ -160,7 +161,7 @@ if __name__ == "__main__":
         clustered_data_kmeans, kmeans_model, silhouette, davies = kmeans_clustering(
             prior_data.copy(), n_clusters=5, results_dir=results_dir)
 
-        clustered_data_dbscan, dbscan_model = dbscan_clustering(
+        clustered_data_dbscan, dbscan_model, dbscan_silhouette, dbscan_davies = dbscan_clustering(
             prior_data.copy(), eps=0.5, min_samples=5, results_dir=results_dir)
 
         # Save results
