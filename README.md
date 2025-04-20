@@ -7,7 +7,7 @@ The dataset used in this project contains anonymized data about users, products,
 
 ## 🎥 Demo
 
-➡️ [Click to watch the app demo](app_demo.mp4)
+<video src="assets/app_demo.mp4" controls autoplay muted loop width="100%"></video>
 
 
 ## Table of Contents
