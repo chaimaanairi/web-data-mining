@@ -6,9 +6,8 @@ This project analyzes user behavior data from web-based shopping platforms (e.g.
 The dataset used in this project contains anonymized data about users, products, and their order histories. Several machine learning algorithms are applied to segment customers, predict purchasing tendencies, and analyze relationships between products.
 
 ## 📽️ Demo Video
-
-[![Watch the demo](https://img.youtube.com/vi/UXlNFepDEIo/hqdefault.jpg)](https://youtu.be/UXlNFepDEIo)
-
+<iframe width="560" height="315" src="https://www.youtube.com/embed/UXlNFepDEIo?autoplay=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen>
+</iframe>
 
 ## Table of Contents
 - [Project Objective](#project-objective)
