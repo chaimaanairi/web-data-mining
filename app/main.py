@@ -67,15 +67,17 @@ step = st.sidebar.radio("Choose a step:", [
     "Evaluation Models Performance"
 ])
 
-# Session state for holding data
-if 'raw_data' not in st.session_state:
-    st.session_state.raw_data = None
-if 'processed_data' not in st.session_state:
-    st.session_state.processed_data = None
-if 'clustered_kmeans' not in st.session_state:
-    st.session_state.clustered_kmeans = None
-if 'clustered_dbscan' not in st.session_state:
-    st.session_state.clustered_dbscan = None
+# Session state for holding data and models
+keys_to_initialize = [
+    'raw_data', 'processed_data', 'clustered_kmeans', 'clustered_dbscan',
+    'random_forest_model', 'knn_model', 'xgboost_model', 'apriori_rules'
+]
+
+# Initialize session state for each key if not already set
+for key in keys_to_initialize:
+    if key not in st.session_state:
+        st.session_state[key] = None
+
 
 # Step: Upload
 if step == "Upload Data":
@@ -445,127 +447,88 @@ elif step == "Run Apriori Mining":
         st.warning("⚠️ Please run preprocessing first to generate data.")
 
 
-
 # Step: Evaluation Models Performance
 elif step == "Evaluation Models Performance":
     st.subheader("📊 Evaluation of Models Performance")
 
     st.write("This section will provide an overview of the performance of the various models used in this project.")
 
+    # Function to load metrics from the reports.txt file
+    def load_metrics(report_filename):
+        try:
+            with open(report_filename, 'r') as f:
+                return f.read()
+        except Exception as e:
+            st.error(f"❌ Failed to load {report_filename}: {e}")
+            return None
+
     # 1. Random Forest Classification Evaluation
     if 'random_forest_model' in st.session_state:
-        st.write("### Random Forest Model Evaluation")
-        try:
-            rf_metrics = st.session_state.get('rf_metrics', {})
-            if rf_metrics:
-                rf_df = pd.DataFrame(rf_metrics, index=[0])
-                st.table(rf_df)
-                st.image(os.path.join(RESULTS_DIR, 'random_forest_confusion_matrix.png'),
-                         caption="Random Forest Confusion Matrix")
-                st.image(os.path.join(RESULTS_DIR, 'random_forest_roc_auc_curve.png'),
-                         caption="Random Forest ROC-AUC Curve")
-            else:
-                st.warning("Random Forest model evaluation metrics not available.")
-        except Exception as e:
-            st.error(f"❌ Failed to load Random Forest evaluation: {e}")
+        st.write("#### Random Forest Model Evaluation")
+        rf_report = os.path.join(RESULTS_DIR, 'random_forest_report.txt')
+        rf_metrics = load_metrics(rf_report)
+        if rf_metrics:
+            st.markdown(f"```\n{rf_metrics}\n```")
+        else:
+            st.warning("Random Forest model evaluation metrics not available.")
 
     # 2. KNN Classification Evaluation
     if 'knn_model' in st.session_state:
-        st.write("### KNN Model Evaluation")
-        try:
-            knn_metrics = st.session_state.get('knn_metrics', {})
-            if knn_metrics:
-                knn_df = pd.DataFrame(knn_metrics, index=[0])
-                st.table(knn_df)
-                st.image(os.path.join(RESULTS_DIR, 'knn_confusion_matrix.png'), caption="KNN Confusion Matrix")
-                st.image(os.path.join(RESULTS_DIR, 'knn_roc_auc_curve.png'), caption="KNN ROC-AUC Curve")
-            else:
-                st.warning("KNN model evaluation metrics not available.")
-        except Exception as e:
-            st.error(f"❌ Failed to load KNN evaluation: {e}")
+        st.write("#### KNN Model Evaluation")
+        knn_report = os.path.join(RESULTS_DIR, 'knn_report.txt')
+        knn_metrics = load_metrics(knn_report)
+        if knn_metrics:
+            st.markdown(f"```\n{knn_metrics}\n```")
+        else:
+            st.warning("KNN model evaluation metrics not available.")
 
     # 3. XGBoost Classification Evaluation
     if 'xgboost_model' in st.session_state:
-        st.write("### XGBoost Model Evaluation")
-        try:
-            xgb_metrics = st.session_state.get('xgboost_metrics', {})
-            if xgb_metrics:
-                xgb_df = pd.DataFrame(xgb_metrics, index=[0])
-                st.table(xgb_df)
-                st.image(os.path.join(RESULTS_DIR, 'xgboost_confusion_matrix.png'), caption="XGBoost Confusion Matrix")
-                st.image(os.path.join(RESULTS_DIR, 'xgboost_roc_auc_curve.png'), caption="XGBoost ROC-AUC Curve")
-            else:
-                st.warning("XGBoost model evaluation metrics not available.")
-        except Exception as e:
-            st.error(f"❌ Failed to load XGBoost evaluation: {e}")
+        st.write("#### XGBoost Model Evaluation")
+        xgb_report = os.path.join(RESULTS_DIR, 'XGBoost_report.txt')
+        xgb_metrics = load_metrics(xgb_report)
+        if xgb_metrics:
+            st.markdown(f"```\n{xgb_metrics}\n```")
+        else:
+            st.warning("XGBoost model evaluation metrics not available.")
 
     # 4. KMeans Clustering Evaluation
     if 'clustered_kmeans' in st.session_state:
-        st.write("### KMeans Clustering Evaluation")
-        try:
-            # Assuming silhouette score is available from KMeans
-            silhouette_score = st.session_state.get('kmeans_silhouette_score', None)
-            if silhouette_score is not None:
-                st.write(f"**Silhouette Score**: {silhouette_score:.4f}")
-            else:
-                st.warning("Silhouette score for KMeans not available.")
-
-            # Display cluster size (number of points in each cluster)
-            if 'clustered_kmeans' in st.session_state:
-                cluster_sizes = st.session_state.clustered_kmeans['kmeans_cluster'].value_counts()
-                st.write("**Cluster Sizes**:")
-                st.write(cluster_sizes)
-        except Exception as e:
-            st.error(f"❌ Failed to load KMeans evaluation: {e}")
+        st.write("#### KMeans Clustering Evaluation")
+        kmeans_report = os.path.join(RESULTS_DIR, 'kmeans_report.txt')
+        kmeans_metrics = load_metrics(kmeans_report)
+        if kmeans_metrics:
+            st.markdown(f"```\n{kmeans_metrics}\n```")
+        else:
+            st.warning("KMeans clustering evaluation metrics not available.")
 
     # 5. DBSCAN Clustering Evaluation
     if 'clustered_dbscan' in st.session_state:
-        st.write("### DBSCAN Clustering Evaluation")
-        try:
-            # Assuming silhouette score is available from DBSCAN
-            silhouette_score = st.session_state.get('dbscan_silhouette_score', None)
-            if silhouette_score is not None:
-                st.write(f"**Silhouette Score**: {silhouette_score:.4f}")
-            else:
-                st.warning("Silhouette score for DBSCAN not available.")
-
-            # Display cluster size (number of points in each cluster)
-            if 'clustered_dbscan' in st.session_state:
-                cluster_sizes = st.session_state.clustered_dbscan['dbscan_cluster'].value_counts()
-                st.write("**Cluster Sizes**:")
-                st.write(cluster_sizes)
-        except Exception as e:
-            st.error(f"❌ Failed to load DBSCAN evaluation: {e}")
+        st.write("#### DBSCAN Clustering Evaluation")
+        dbscan_report = os.path.join(RESULTS_DIR, 'dbscan_report.txt')
+        dbscan_metrics = load_metrics(dbscan_report)
+        if dbscan_metrics:
+            st.markdown(f"```\n{dbscan_metrics}\n```")
+        else:
+            st.warning("DBSCAN clustering evaluation metrics not available.")
 
     # 6. Apriori Mining Evaluation
     if 'apriori_rules' in st.session_state:
-        st.write("### Apriori Mining Evaluation")
-        try:
-            apriori_rules = st.session_state.get('apriori_rules', pd.DataFrame())
-            if not apriori_rules.empty:
-                st.write("**Number of Rules Generated**: ", len(apriori_rules))
-                st.write("**Average Support**: ", apriori_rules['support'].mean())
-                st.write("**Average Confidence**: ", apriori_rules['confidence'].mean())
-                st.write("**Average Lift**: ", apriori_rules['lift'].mean())
+        st.write("#### Apriori Mining Evaluation")
+        apriori_report = os.path.join(RESULTS_DIR, 'apriori_report.txt')
+        apriori_metrics = load_metrics(apriori_report)
+        if apriori_metrics:
+            st.markdown(f"```\n{apriori_metrics}\n```")
+        else:
+            st.warning("Apriori mining evaluation metrics not available.")
 
-                # Lift Coverage: Percentage of rules with lift >= 1.5
-                lift_coverage = (apriori_rules['lift'] >= 1.5).mean() * 100
-                st.write(f"**Lift Coverage (Lift >= 1.5)**: {lift_coverage:.2f}%")
+    st.markdown("---")
+    st.markdown("### About")
+    st.markdown("This web application is designed for customer segmentation and behavior analysis.")
+    st.markdown("It includes data preprocessing, clustering, classification, and visualization.")
+    st.markdown("Developed by **Chaimaa Nairi**")
+    st.markdown("[GitHub 🐙](https://github.com/chaimaanairi) & [LinkedIn 🔗](https://www.linkedin.com/in/chaimaa-nairi-4a9840159/) & [Twitter 🐦](https://twitter.com/ChaimaaNairi)")
+    st.markdown("---")
 
-                # Show the first 5 rules
-                st.write("### Top 5 Rules:")
-                st.dataframe(apriori_rules[['antecedents', 'consequents', 'support', 'confidence', 'lift']].head())
 
-                # Visualizations for Apriori
-                support_confidence_plot = os.path.join(RESULTS_DIR, "support_vs_confidence.png")
-                if os.path.exists(support_confidence_plot):
-                    st.image(support_confidence_plot, caption="Support vs Confidence Plot")
-
-                lift_histogram_plot = os.path.join(RESULTS_DIR, "lift_histogram.png")
-                if os.path.exists(lift_histogram_plot):
-                    st.image(lift_histogram_plot, caption="Lift Histogram")
-            else:
-                st.warning("Apriori mining rules not available.")
-        except Exception as e:
-            st.error(f"❌ Failed to load Apriori evaluation: {e}")
 
