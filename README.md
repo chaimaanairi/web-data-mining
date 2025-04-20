@@ -4,16 +4,16 @@
 This project analyzes user behavior data from web-based shopping platforms (e.g., InstaCart) to perform customer segmentation and predict purchasing trends. By categorizing users based on their shopping habits, personalized marketing strategies and efficient recommendation systems can be developed. 
 
 The dataset used in this project contains anonymized data about users, products, and their order histories. Several machine learning algorithms are applied to segment customers, predict purchasing tendencies, and analyze relationships between products.
-
+`
 ## 📽️ Demo Video
-<iframe width="560" height="315" src="https://www.youtube.com/embed/UXlNFepDEIo?autoplay=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen>
-</iframe>
+## Demo Video
+[![Watch the demo](https://img.youtube.com/vi/UXlNFepDEIo/hqdefault.jpg)](https://www.youtube.com/watch?v=UXlNFepDEIo)
 
 ## Table of Contents
 - [Project Objective](#project-objective)
 - [Dataset](#dataset)
 - [Methodology](#methodology)
-  - [Data Preprocessing](#data-preprocessing)
+  - [Data Preprocessing](#data-preprocessing)`
   - [Algorithms Used](#algorithms-used)
   - [Evaluation Metrics](#evaluation-metrics)
   - [Analysis and Visualization](#analysis-and-visualization)
