@@ -52,6 +52,19 @@ def run_apriori(data, results_dir,
     avg_lift = rules['lift'].mean()
     lift_coverage = (rules['lift'] >= min_lift).mean() * 100
 
+    # Save the metrics to a report text file
+    apriori_report_path = os.path.join(results_dir, "apriori_report.txt")
+    with open(apriori_report_path, 'w') as f:
+        f.write("Apriori Algorithm Report\n")
+        f.write("=========================\n")
+        f.write(f"Number of Rules: {num_rules}\n")
+        f.write(f"Average Support: {avg_support:.4f}\n")
+        f.write(f"Average Confidence: {avg_confidence:.4f}\n")
+        f.write(f"Average Lift: {avg_lift:.4f}\n")
+        f.write(f"Lift Coverage (Lift >= 1.5): {lift_coverage:.2f}%\n")
+        f.write("\nMetrics and results have been saved successfully.\n")
+    print(f"✅ Apriori report saved to {apriori_report_path}")
+
     # Visualization
     plt.figure(figsize=(10, 6))
     sns.scatterplot(data=rules, x='support', y='confidence', hue='lift', palette='viridis')
