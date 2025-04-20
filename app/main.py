@@ -193,43 +193,52 @@ elif step == "Run Clustering Models":
         if len(prior_data) < 5:
             st.warning(f"⚠️ Not enough data to perform clustering (need ≥5 rows, got {len(prior_data)})")
         else:
-            # Sidebar controls
+            # Sidebar controls for KMeans parameters
             st.sidebar.subheader("KMeans Parameters")
             n_clusters = st.sidebar.slider("Number of Clusters", 2, 10, 5)
 
+            # Sidebar controls for DBSCAN parameters
             st.sidebar.subheader("DBSCAN Parameters")
             eps = st.sidebar.slider("Epsilon", 0.1, 1.0, 0.5)
             min_samples = st.sidebar.slider("Min Samples", 1, 10, 5)
 
-            # Session state init
+            # Initialize session state flags for storing the results
             for key in ['show_kmeans_result', 'show_kmeans_pca', 'show_dbscan_result', 'show_dbscan_pca']:
                 if key not in st.session_state:
                     st.session_state[key] = False
 
-            # KMeans Clustering Button
+            # Run KMeans clustering
             if st.button("🧠 Run KMeans Clustering"):
-                clustered_kmeans, model_kmeans = kmeans_clustering(prior_data.copy(), n_clusters=n_clusters, results_dir=RESULTS_DIR)
+                clustered_kmeans, model_kmeans, kmeans_silhouette, kmeans_davies = kmeans_clustering(
+                    prior_data.copy(), n_clusters=n_clusters, results_dir=RESULTS_DIR)
                 st.session_state.clustered_kmeans = clustered_kmeans
                 st.session_state.model_kmeans = model_kmeans
+                st.session_state.kmeans_silhouette = kmeans_silhouette
+                st.session_state.kmeans_davies = kmeans_davies
                 st.session_state.show_kmeans_result = True
 
-            # Show KMeans PCA Plot
+            # Show KMeans PCA plot
             if st.button("📉 Show KMeans PCA Cluster Plot"):
                 if 'clustered_kmeans' in st.session_state:
-                    plot_clusters(st.session_state.clustered_kmeans, kmeans_model=st.session_state.model_kmeans, results_dir=RESULTS_DIR)
+                    plot_clusters(st.session_state.clustered_kmeans, kmeans_model=st.session_state.model_kmeans,
+                                  results_dir=RESULTS_DIR)
                     st.session_state.show_kmeans_pca = True
 
-            # DBSCAN Clustering Button
+            # Run DBSCAN clustering
             if st.button("🧠 Run DBSCAN Clustering"):
-                clustered_dbscan, model_dbscan = dbscan_clustering(prior_data.copy(), eps=eps, min_samples=min_samples, results_dir=RESULTS_DIR)
+                clustered_dbscan, model_dbscan, dbscan_silhouette, dbscan_davies = dbscan_clustering(
+                    prior_data.copy(), eps=eps, min_samples=min_samples, results_dir=RESULTS_DIR)
                 st.session_state.clustered_dbscan = clustered_dbscan
                 st.session_state.model_dbscan = model_dbscan
+                st.session_state.dbscan_silhouette = dbscan_silhouette
+                st.session_state.dbscan_davies = dbscan_davies
                 st.session_state.show_dbscan_result = True
 
-            # Show DBSCAN PCA Plot
+            # Show DBSCAN PCA plot
             if st.button("📉 Show DBSCAN PCA Cluster Plot"):
                 if 'clustered_dbscan' in st.session_state:
-                    plot_clusters(st.session_state.clustered_dbscan, dbscan_model=st.session_state.model_dbscan, results_dir=RESULTS_DIR)
+                    plot_clusters(st.session_state.clustered_dbscan, dbscan_model=st.session_state.model_dbscan,
+                                  results_dir=RESULTS_DIR)
                     st.session_state.show_dbscan_pca = True
 
             # ======================
@@ -239,6 +248,14 @@ elif step == "Run Clustering Models":
                 st.subheader("🔍 KMeans Clustering Result")
                 st.dataframe(st.session_state.clustered_kmeans[['user_id', 'kmeans_cluster']].drop_duplicates().head())
 
+                # Display KMeans Metrics as a table
+                kmeans_metrics = pd.DataFrame({
+                    "Metric": ["Silhouette Score", "Davies-Bouldin Index"],
+                    "Value": [st.session_state.kmeans_silhouette, st.session_state.kmeans_davies]
+                })
+                st.subheader("📊 KMeans Clustering Metrics")
+                st.table(kmeans_metrics)
+
             if st.session_state.show_kmeans_pca:
                 st.subheader("📊 KMeans PCA Cluster Plot")
                 st.image(os.path.join(RESULTS_DIR, 'kmeans_pca_clustering_plot.png'))
@@ -246,6 +263,17 @@ elif step == "Run Clustering Models":
             if st.session_state.show_dbscan_result:
                 st.subheader("🔍 DBSCAN Clustering Result")
                 st.dataframe(st.session_state.clustered_dbscan[['user_id', 'dbscan_cluster']].drop_duplicates().head())
+
+                # Display DBSCAN Metrics as a table
+                dbscan_metrics = pd.DataFrame({
+                    "Metric": ["Silhouette Score", "Davies-Bouldin Index"],
+                    "Value": [
+                        st.session_state.dbscan_silhouette if st.session_state.dbscan_silhouette != -1 else "Not applicable",
+                        st.session_state.dbscan_davies if st.session_state.dbscan_davies != -1 else "Not applicable"
+                    ]
+                })
+                st.subheader("📊 DBSCAN Clustering Metrics")
+                st.table(dbscan_metrics)
 
             if st.session_state.show_dbscan_pca:
                 st.subheader("📊 DBSCAN PCA Cluster Plot")
@@ -381,23 +409,165 @@ elif step == "Run Apriori Mining":
         st.subheader("Apriori Mining")
         prior_data = st.session_state.processed_data
 
-        rules_path = os.path.join(RESULTS_DIR, "apriori_rules.csv")
+        if st.button("📂 Load Apriori Mining Results"):
+            apriori_model_path = os.path.join(RESULTS_DIR, "apriori_rules.csv")
+            if os.path.exists(apriori_model_path):
+                # Load rules and metrics
+                rules = pd.read_csv(apriori_model_path)
 
-        if os.path.exists(rules_path):
-            rules = pd.read_csv(rules_path)
+                # Display metrics
+                metrics = {
+                    'Number of Rules': len(rules),
+                    'Average Support': rules['support'].mean(),
+                    'Average Confidence': rules['confidence'].mean(),
+                    'Average Lift': rules['lift'].mean(),
+                    'Lift Coverage (%)': (rules['lift'] >= 1.5).mean() * 100
+                }
 
-            st.write(f"📄 Total Rules: {len(rules)}")
-            st.dataframe(rules[['antecedents', 'consequents', 'support', 'confidence', 'lift']].head(20))
-        else:
-            st.warning("No Apriori rules found. Please run `apriori_mining.py` first.")
+                st.write("### Apriori Mining Metrics")
+                st.table(pd.DataFrame(metrics, index=[0]))
+
+                # Show top 5 rules
+                st.write("### Top 5 Rules")
+                st.dataframe(rules[['antecedents', 'consequents', 'support', 'confidence', 'lift']].head())
+
+                # Display Support vs Confidence plot
+                support_confidence_img = os.path.join(RESULTS_DIR, "support_vs_confidence.png")
+                if os.path.exists(support_confidence_img):
+                    st.image(support_confidence_img, caption="Support vs Confidence (Colored by Lift)")
+
+                # Display Lift Histogram
+                lift_hist_img = os.path.join(RESULTS_DIR, "lift_histogram.png")
+                if os.path.exists(lift_hist_img):
+                    st.image(lift_hist_img, caption="Distribution of Lift")
+
+            else:
+                st.warning("No Apriori mining results found.")
     else:
-        st.warning("⚠️ Please preprocess data first.")
+        st.warning("⚠️ Please run preprocessing first to generate data.")
+
 
 
 # Step: Evaluation Models Performance
 elif step == "Evaluation Models Performance":
     st.subheader("📊 Evaluation of Models Performance")
-    st.write("This section will provide an overview of the performance of the various models used in this project.")
-    st.write("You can check the results of the classification and learning models in their respective sections.")
 
+    st.write("This section will provide an overview of the performance of the various models used in this project.")
+
+    # 1. Random Forest Classification Evaluation
+    if 'random_forest_model' in st.session_state:
+        st.write("### Random Forest Model Evaluation")
+        try:
+            rf_metrics = st.session_state.get('rf_metrics', {})
+            if rf_metrics:
+                rf_df = pd.DataFrame(rf_metrics, index=[0])
+                st.table(rf_df)
+                st.image(os.path.join(RESULTS_DIR, 'random_forest_confusion_matrix.png'),
+                         caption="Random Forest Confusion Matrix")
+                st.image(os.path.join(RESULTS_DIR, 'random_forest_roc_auc_curve.png'),
+                         caption="Random Forest ROC-AUC Curve")
+            else:
+                st.warning("Random Forest model evaluation metrics not available.")
+        except Exception as e:
+            st.error(f"❌ Failed to load Random Forest evaluation: {e}")
+
+    # 2. KNN Classification Evaluation
+    if 'knn_model' in st.session_state:
+        st.write("### KNN Model Evaluation")
+        try:
+            knn_metrics = st.session_state.get('knn_metrics', {})
+            if knn_metrics:
+                knn_df = pd.DataFrame(knn_metrics, index=[0])
+                st.table(knn_df)
+                st.image(os.path.join(RESULTS_DIR, 'knn_confusion_matrix.png'), caption="KNN Confusion Matrix")
+                st.image(os.path.join(RESULTS_DIR, 'knn_roc_auc_curve.png'), caption="KNN ROC-AUC Curve")
+            else:
+                st.warning("KNN model evaluation metrics not available.")
+        except Exception as e:
+            st.error(f"❌ Failed to load KNN evaluation: {e}")
+
+    # 3. XGBoost Classification Evaluation
+    if 'xgboost_model' in st.session_state:
+        st.write("### XGBoost Model Evaluation")
+        try:
+            xgb_metrics = st.session_state.get('xgboost_metrics', {})
+            if xgb_metrics:
+                xgb_df = pd.DataFrame(xgb_metrics, index=[0])
+                st.table(xgb_df)
+                st.image(os.path.join(RESULTS_DIR, 'xgboost_confusion_matrix.png'), caption="XGBoost Confusion Matrix")
+                st.image(os.path.join(RESULTS_DIR, 'xgboost_roc_auc_curve.png'), caption="XGBoost ROC-AUC Curve")
+            else:
+                st.warning("XGBoost model evaluation metrics not available.")
+        except Exception as e:
+            st.error(f"❌ Failed to load XGBoost evaluation: {e}")
+
+    # 4. KMeans Clustering Evaluation
+    if 'clustered_kmeans' in st.session_state:
+        st.write("### KMeans Clustering Evaluation")
+        try:
+            # Assuming silhouette score is available from KMeans
+            silhouette_score = st.session_state.get('kmeans_silhouette_score', None)
+            if silhouette_score is not None:
+                st.write(f"**Silhouette Score**: {silhouette_score:.4f}")
+            else:
+                st.warning("Silhouette score for KMeans not available.")
+
+            # Display cluster size (number of points in each cluster)
+            if 'clustered_kmeans' in st.session_state:
+                cluster_sizes = st.session_state.clustered_kmeans['kmeans_cluster'].value_counts()
+                st.write("**Cluster Sizes**:")
+                st.write(cluster_sizes)
+        except Exception as e:
+            st.error(f"❌ Failed to load KMeans evaluation: {e}")
+
+    # 5. DBSCAN Clustering Evaluation
+    if 'clustered_dbscan' in st.session_state:
+        st.write("### DBSCAN Clustering Evaluation")
+        try:
+            # Assuming silhouette score is available from DBSCAN
+            silhouette_score = st.session_state.get('dbscan_silhouette_score', None)
+            if silhouette_score is not None:
+                st.write(f"**Silhouette Score**: {silhouette_score:.4f}")
+            else:
+                st.warning("Silhouette score for DBSCAN not available.")
+
+            # Display cluster size (number of points in each cluster)
+            if 'clustered_dbscan' in st.session_state:
+                cluster_sizes = st.session_state.clustered_dbscan['dbscan_cluster'].value_counts()
+                st.write("**Cluster Sizes**:")
+                st.write(cluster_sizes)
+        except Exception as e:
+            st.error(f"❌ Failed to load DBSCAN evaluation: {e}")
+
+    # 6. Apriori Mining Evaluation
+    if 'apriori_rules' in st.session_state:
+        st.write("### Apriori Mining Evaluation")
+        try:
+            apriori_rules = st.session_state.get('apriori_rules', pd.DataFrame())
+            if not apriori_rules.empty:
+                st.write("**Number of Rules Generated**: ", len(apriori_rules))
+                st.write("**Average Support**: ", apriori_rules['support'].mean())
+                st.write("**Average Confidence**: ", apriori_rules['confidence'].mean())
+                st.write("**Average Lift**: ", apriori_rules['lift'].mean())
+
+                # Lift Coverage: Percentage of rules with lift >= 1.5
+                lift_coverage = (apriori_rules['lift'] >= 1.5).mean() * 100
+                st.write(f"**Lift Coverage (Lift >= 1.5)**: {lift_coverage:.2f}%")
+
+                # Show the first 5 rules
+                st.write("### Top 5 Rules:")
+                st.dataframe(apriori_rules[['antecedents', 'consequents', 'support', 'confidence', 'lift']].head())
+
+                # Visualizations for Apriori
+                support_confidence_plot = os.path.join(RESULTS_DIR, "support_vs_confidence.png")
+                if os.path.exists(support_confidence_plot):
+                    st.image(support_confidence_plot, caption="Support vs Confidence Plot")
+
+                lift_histogram_plot = os.path.join(RESULTS_DIR, "lift_histogram.png")
+                if os.path.exists(lift_histogram_plot):
+                    st.image(lift_histogram_plot, caption="Lift Histogram")
+            else:
+                st.warning("Apriori mining rules not available.")
+        except Exception as e:
+            st.error(f"❌ Failed to load Apriori evaluation: {e}")
 
