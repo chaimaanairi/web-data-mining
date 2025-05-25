@@ -71,7 +71,7 @@ def run_apriori(data, results_dir,
     plt.title('Support vs Confidence (Colored by Lift)')
     plt.xlabel('Support')
     plt.ylabel('Confidence')
-    plt.savefig(os.path.join(results_dir, "support_vs_confidence.png"))
+    plt.savefig(os.path.join(results_dir, "apriori_support_vs_confidence.png"))
     plt.close()
 
     # Lift Histogram
@@ -80,7 +80,7 @@ def run_apriori(data, results_dir,
     plt.title('Distribution of Lift')
     plt.xlabel('Lift')
     plt.ylabel('Frequency')
-    plt.savefig(os.path.join(results_dir, "lift_histogram.png"))
+    plt.savefig(os.path.join(results_dir, "apriori_lift_histogram.png"))
     plt.close()
 
     print(f"✅ {num_rules} rules generated and saved to {rules_path}")

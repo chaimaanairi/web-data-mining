@@ -299,8 +299,8 @@ elif step == "Run Classification Model":
             # Button to load existing classification results
             if st.button("📂 Load Classification Results"):
                 model_path = os.path.join(RESULTS_DIR, "random_forest_model.pkl")
-                cm_plot_path = os.path.join(RESULTS_DIR, "confusion_matrix.png")
-                roc_auc_plot_path = os.path.join(RESULTS_DIR, "roc_auc_curve.png")
+                cm_plot_path = os.path.join(RESULTS_DIR, "random_forest_confusion_matrix.png")
+                roc_auc_plot_path = os.path.join(RESULTS_DIR, "random_forest_roc_auc_curve.png")
 
                 try:
                     # Load the entire model and results (assumes it was saved as a dictionary)
@@ -432,12 +432,12 @@ elif step == "Run Apriori Mining":
                 st.dataframe(rules[['antecedents', 'consequents', 'support', 'confidence', 'lift']].head())
 
                 # Display Support vs Confidence plot
-                support_confidence_img = os.path.join(RESULTS_DIR, "support_vs_confidence.png")
+                support_confidence_img = os.path.join(RESULTS_DIR, "apriori_support_vs_confidence.png")
                 if os.path.exists(support_confidence_img):
                     st.image(support_confidence_img, caption="Support vs Confidence (Colored by Lift)")
 
                 # Display Lift Histogram
-                lift_hist_img = os.path.join(RESULTS_DIR, "lift_histogram.png")
+                lift_hist_img = os.path.join(RESULTS_DIR, "apriori_lift_histogram.png")
                 if os.path.exists(lift_hist_img):
                     st.image(lift_hist_img, caption="Distribution of Lift")
 
