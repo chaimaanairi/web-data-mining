@@ -529,6 +529,3 @@ elif step == "Evaluation Models Performance":
     st.markdown("Developed by **Chaimaa Nairi**")
     st.markdown("[GitHub 🐙](https://github.com/chaimaanairi) & [LinkedIn 🔗](https://www.linkedin.com/in/chaimaa-nairi-4a9840159/) & [Twitter 🐦](https://twitter.com/ChaimaaNairi)")
     st.markdown("---")
-
-
-
