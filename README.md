@@ -1,7 +1,7 @@
 # Customer Segmentation and Behavior Analysis Based on Web Usage Data
 
 ## Overview
-This project analyzes user behavior data from web-based shopping platforms (InstaCart dataset) to perform customer segmentation and predict purchasing trends. By categorizing users based on their shopping habits, personalized marketing strategies and efficient recommendation systems can be developed. 
+This project analyzes user behavior data from web-based shopping platforms to perform customer segmentation and predict purchasing trends. By categorizing users based on their shopping habits, personalized marketing strategies and efficient recommendation systems can be developed. 
 
 The dataset used in this project contains anonymized data about users, products, and their order histories. Several machine learning algorithms are applied to segment customers, predict purchasing tendencies, and analyze relationships between products.
 `
